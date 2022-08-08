@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 const (
@@ -56,11 +54,4 @@ func get(w http.ResponseWriter, r *http.Request) {
 
 	io.Copy(w, file)
 	log.Printf("GET SUCCESS: object '%s'\n", file.Name())
-}
-
-func init() {
-	err := godotenv.Load("config.env")
-	if err != nil {
-		log.Fatalln("godotenv Error: env files load failed")
-	}
 }
