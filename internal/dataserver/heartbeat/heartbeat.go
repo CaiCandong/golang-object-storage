@@ -1,8 +1,8 @@
 package heartbeat
 
 import (
-	"golang-object-storage/inernal/dataserver/global"
-	"golang-object-storage/inernal/pkg/rabbitmq"
+	"golang-object-storage/internal/dataserver/global"
+	"golang-object-storage/internal/pkg/rabbitmq"
 	"os"
 	"time"
 )

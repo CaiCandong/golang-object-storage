@@ -1,8 +1,8 @@
 package locate
 
 import (
-	"golang-object-storage/inernal/dataserver/global"
-	"golang-object-storage/inernal/pkg/rabbitmq"
+	"golang-object-storage/internal/dataserver/global"
+	"golang-object-storage/internal/pkg/rabbitmq"
 	"os"
 	"path/filepath"
 	"strconv"

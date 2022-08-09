@@ -2,9 +2,10 @@ package objects
 
 import (
 	"fmt"
-	"golang-object-storage/inernal/apiserver/heartbeat"
-	"golang-object-storage/inernal/apiserver/locate"
-	"golang-object-storage/inernal/pkg/objectstream"
+	"golang-object-storage/internal/apiserver/heartbeat"
+	"golang-object-storage/internal/apiserver/locate"
+	"golang-object-storage/internal/pkg/objectstream"
+
 	"io"
 	"log"
 	"net/http"

@@ -1,7 +1,7 @@
 package locate
 
 import (
-	"golang-object-storage/inernal/pkg/rabbitmq"
+	"golang-object-storage/internal/pkg/rabbitmq"
 	"log"
 	"os"
 	"strconv"

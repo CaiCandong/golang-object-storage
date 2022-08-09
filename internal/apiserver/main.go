@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
-	"golang-object-storage/inernal/apiserver/global"
-	"golang-object-storage/inernal/apiserver/heartbeat"
-	"golang-object-storage/inernal/apiserver/locate"
-	"golang-object-storage/inernal/apiserver/objects"
+
+	"golang-object-storage/internal/apiserver/global"
+	"golang-object-storage/internal/apiserver/heartbeat"
+	"golang-object-storage/internal/apiserver/locate"
+	"golang-object-storage/internal/apiserver/objects"
+	"golang-object-storage/internal/apiserver/versions"
 	"log"
 	"net/http"
 
@@ -28,5 +30,6 @@ func main() {
 	go heartbeat.ListenHeartbeat()
 	http.HandleFunc("/objects/", objects.Handler)
 	http.HandleFunc("/locate/", locate.Handler)
+	http.HandleFunc("/versions/", versions.Handler)
 	log.Fatalln(http.ListenAndServe(global.ListenAddr, nil))
 }

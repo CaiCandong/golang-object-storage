@@ -1,7 +1,7 @@
 package heartbeat
 
 import (
-	"golang-object-storage/inernal/pkg/rabbitmq"
+	"golang-object-storage/internal/pkg/rabbitmq"
 	"log"
 	"math/rand"
 	"os"
