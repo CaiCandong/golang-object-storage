@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-
 	"golang-object-storage/internal/apiserver/global"
 	"golang-object-storage/internal/apiserver/heartbeat"
 	"golang-object-storage/internal/apiserver/locate"

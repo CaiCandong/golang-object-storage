@@ -26,7 +26,13 @@ func getEsClient(esServer string) *elastic.Client {
 	if serverEsClientMap[esServer] != nil {
 		return serverEsClientMap[esServer]
 	}
-	newClient, err := elastic.NewClient()
+	newClient, err := elastic.NewClient(
+		elastic.SetURL("http://127.0.0.1:9200"),
+		elastic.SetSniff(false),
+	)
+	//urlOpt := elastic.SetURL(esServer)
+	//sniffOpt := elastic.SetSniff(false)
+	//newClient, err := elastic.NewClient(urlOpt, sniffOpt)
 	if err != nil {
 		log.Printf("ES Error: failed to new es client for server [%s]\n, details: %s\n", esServer, err.Error())
 		return nil
@@ -166,7 +172,7 @@ func SearchAllVersions(name string, from, size int) ([]Metadata, error) {
 	return metadatas, nil
 }
 
-// 暂时没用上，本章的删除机制是创建一个新版本并将size和hash置空
+// DelMetadata 暂时没用上，本章的删除机制是创建一个新版本并将size和hash置空
 func DelMetadata(name string, version int) {
 	esClient := getEsClient(os.Getenv("ES_SERVER"))
 	esClient.Update().
