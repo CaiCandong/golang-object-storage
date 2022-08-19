@@ -8,21 +8,19 @@ import (
 )
 
 type RabbitMQ struct {
-	conn         *amqp.Connection
-	channel      *amqp.Channel
-	exchangeName string
-	queueName    string
+	conn         *amqp.Connection // Socket 连接
+	channel      *amqp.Channel    // 信道
+	exchangeName string           // 交换机
+	queueName    string           //消息队列
 }
 
 func NewRabbitMQ(mqUrl string) *RabbitMQ {
 	// 连接MQ服务器，打开一个channel，客户端通过channel来执行命令
 	conn, err := amqp.Dial(mqUrl)
-	//err_utils.PanicNonNilError(err)
 	if err != nil {
 		panic(err)
 	}
 	channel, err := conn.Channel()
-	//err_utils.PanicNonNilError(err)
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +33,6 @@ func NewRabbitMQ(mqUrl string) *RabbitMQ {
 		false,
 		nil,
 	)
-	//err_utils.PanicNonNilError(err)
 	if err != nil {
 		panic(err)
 	}
@@ -48,8 +45,14 @@ func NewRabbitMQ(mqUrl string) *RabbitMQ {
 	return mq
 }
 
+// BindExchange 确定队列和交换机之间的映射关系
 func (mq *RabbitMQ) BindExchange(exchangeName string) {
-	err := mq.channel.QueueBind(mq.queueName, "", exchangeName, false, nil)
+	err := mq.channel.QueueBind(
+		mq.queueName,
+		"",
+		exchangeName,
+		false,
+		nil)
 	//err_utils.PanicNonNilError(err)
 	if err != nil {
 		panic(err)
@@ -85,7 +88,11 @@ func (mq *RabbitMQ) Publish(exchangeName string, messageBody interface{}) {
 		panic(err)
 	}
 	// 投递消息
-	err = mq.channel.Publish(exchangeName, "", false, false,
+	err = mq.channel.Publish(
+		exchangeName,
+		"",
+		false,
+		false,
 		amqp.Publishing{
 			ReplyTo: mq.queueName,
 			Body:    msgJsonData,

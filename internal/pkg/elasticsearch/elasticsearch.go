@@ -15,7 +15,7 @@ type Metadata struct {
 	Name    string `json:"name"`
 	Version int    `json:"version"`
 	Size    int64  `json:"size"`
-	Hash    string `json:"hash"`
+	Hash    string `json:"hashutils"`
 }
 
 // 连接池:为集群做准备
@@ -51,7 +51,7 @@ func metadataExists(name string, version int, size int64, hash string) bool {
 	nameQuery := elastic.NewTermQuery("name", name)
 	versionQuery := elastic.NewTermQuery("version", version)
 	sizeQuery := elastic.NewTermQuery("size", size)
-	hashQuery := elastic.NewTermQuery("hash", hash)
+	hashQuery := elastic.NewTermQuery("hashutils", hash)
 	searchResult, err := esClient.Search().
 		Index("metadata").
 		Query(nameQuery).Query(versionQuery).Query(sizeQuery).Query(hashQuery).
@@ -185,7 +185,7 @@ func DelMetadata(name string, version int) {
 		Index("metadata").
 		Id(fmt.Sprintf("%s_%d", name, version)).
 		Doc(map[string]interface{}{
-			"size": 0,
-			"hash": "",
+			"size":      0,
+			"hashutils": "",
 		})
 }

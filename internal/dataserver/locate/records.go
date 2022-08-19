@@ -2,13 +2,16 @@ package locate
 
 import (
 	"golang-object-storage/internal/dataserver/global"
+	"log"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 )
 
 type FileHashRecords struct {
-	records map[string]bool
+	records map[string]int // hash => shard_idx (每个数据服务点只能保存一个分片)
 	mutex   sync.Mutex
 }
 
@@ -16,11 +19,17 @@ var defaultRecord *FileHashRecords
 
 func NewFileHashRecords(pattern string) *FileHashRecords {
 	r := &FileHashRecords{}
-	r.records = make(map[string]bool)
+	r.records = make(map[string]int)
 	files, _ := filepath.Glob(pattern)
 	for i := 0; i < len(files); i++ {
-		hash := filepath.Base(files[i])
-		r.records[hash] = true
+		// file_name: <file_hash>.<shard_idx>.<shard_hash>
+		shardNameComponents := strings.Split(filepath.Base(files[i]), ".")
+		fileHash := shardNameComponents[0]
+		shardIdx, err := strconv.Atoi(shardNameComponents[1])
+		if err != nil {
+			log.Fatalf("Error: shard %v name is invalid, it should be 3 compoments [objectHash.ID.shardHash]\n", shardNameComponents)
+		}
+		r.records[fileHash] = shardIdx
 	}
 	return r
 }
@@ -32,10 +41,10 @@ func (r *FileHashRecords) ObjectExists(hash string) bool {
 	return ok
 }
 
-func (r *FileHashRecords) AddNewObject(hash string) {
+func (r *FileHashRecords) AddNewObject(hash string, shardIdx int) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	r.records[hash] = true
+	r.records[hash] = shardIdx
 }
 
 func (r *FileHashRecords) Delete(hash string) {
@@ -53,8 +62,8 @@ func ObjectExists(hash string) bool {
 	return defaultRecord.ObjectExists(hash)
 }
 
-func AddNewObject(hash string) {
-	defaultRecord.AddNewObject(hash)
+func AddNewObject(hash string, shardIdx int) {
+	defaultRecord.AddNewObject(hash, shardIdx)
 }
 
 func Delete(hash string) {

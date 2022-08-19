@@ -1,16 +1,21 @@
 package locate
 
 import (
+	"encoding/json"
+	"golang-object-storage/internal/apiserver/reedso"
 	"golang-object-storage/internal/pkg/rabbitmq"
-	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
+type LocateMessage struct {
+	Addr string
+	ID   int
+}
+
 // Locate 通过向dataServers发送请求查询文件位置
 // 并通过dataServers消息队列等待相应
-func Locate(objectName string) string {
+func Locate(objectName string) (locateInfo map[int]string) {
 	mq := rabbitmq.NewRabbitMQ(os.Getenv("RABBITMQ_SERVER"))
 
 	mq.Publish("dataServers", objectName)
@@ -20,21 +25,19 @@ func Locate(objectName string) string {
 		time.Sleep(1 * time.Second)
 		mq.Close()
 	}()
-	//lcoateInfo := make(map[int]string)
-	//for i:=0;i<
-	// 准备接收消息
-	msg := <-channel
-	result, err := strconv.Unquote(string(msg.Body))
-	// TODO:处理文件不存在情况
-	if err != nil {
-		panic(err)
+	locateInfo = make(map[int]string)
+	for i := 0; i < reedso.ALL_SHARDS; i++ {
+		msg := <-channel
+		if len(msg.Body) == 0 {
+			return
+		}
+		var info LocateMessage
+		json.Unmarshal(msg.Body, &info)
+		locateInfo[info.ID] = info.Addr
 	}
-	// err_utils.PanicNonNilError(err)
-	log.Printf("INFO: object at server '%s'\n", result)
-
-	return result
+	return
 }
 
 func Exist(objectName string) bool {
-	return Locate(objectName) != ""
+	return len(Locate(objectName)) >= reedso.DATA_SHARDS
 }

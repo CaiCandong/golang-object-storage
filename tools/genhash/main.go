@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/pflag"
-	"golang-object-storage/internal/pkg/hash"
+	"golang-object-storage/internal/pkg/hashutils"
 	"os"
 )
 
@@ -30,7 +30,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	token, err := hash.GetFileHash(os.Args[1])
+	token, err := hashutils.GetFileHash(os.Args[1])
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		return

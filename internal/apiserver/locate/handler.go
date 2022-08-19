@@ -13,7 +13,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	location := Locate(strings.Split(r.RequestURI, "/")[2])
-	if location == "" {
+	if len(location) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -22,6 +22,5 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	// err_utils.PanicNonNilError(err)
 	w.Write(locationJson)
 }

@@ -10,15 +10,21 @@ type GetStream struct {
 	reader io.Reader
 }
 
-func NewGetStream(url string) (*GetStream, error) {
-	response, err := http.Get(url)
+// NewGetStream
+// @author: caicandong
+// @date: 2022-08-16 20:15:47
+// @Description:
+// @param url 为请求文件的网络地址
+// @return *GetStream
+// @return error
+func NewGetStream(download_url string) (*GetStream, error) {
+	response, err := http.Get(download_url)
 	if err != nil {
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error: [dataServer] statusCode: %d\n", response.StatusCode)
 	}
-
 	return &GetStream{reader: response.Body}, nil
 }
 

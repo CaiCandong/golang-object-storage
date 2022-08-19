@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"golang-object-storage/internal/apiserver/heartbeat"
 	"golang-object-storage/internal/apiserver/locate"
-	"golang-object-storage/internal/apiserver/temp"
-	"golang-object-storage/internal/pkg/fileutils"
+	"golang-object-storage/internal/apiserver/reedso"
+	"golang-object-storage/internal/pkg/hashutils"
 	"log"
 	"net/url"
 
@@ -20,27 +20,53 @@ func StoreObject(reader io.Reader, hash string, size int64) (statusCode int, err
 	if locate.Exist(escapedHash) {
 		return http.StatusOK, nil
 	}
-	// 根据心跳信息选择存储节点
-	server := heartbeat.ChooseRandomDataServer()
-	if server == "" {
-		return http.StatusInternalServerError, fmt.Errorf("Error: no alive data server\n")
-	}
-	log.Println("Choose random data server:", server)
-
-	stream, err := temp.NewPutStream(server, hash, size)
+	stream, err := putStream(escapedHash, size)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
-
 	r := io.TeeReader(reader, stream)
-	actualHash := fileutils.CalculateHash(r)
+	actualHash := hashutils.CalculateHash(r)
 	// 进行文件存储
 	if actualHash != hash {
 		stream.Commit(false)
-		err = fmt.Errorf("Error: object hash value is not match, actualHash=[%s], expectedHash=[%s]\n", actualHash, hash)
+		err = fmt.Errorf("Error: object hashutils value is not match, actualHash=[%s], expectedHash=[%s]\n", actualHash, hash)
 		return http.StatusBadRequest, err
 	}
 	stream.Commit(true)
-
 	return http.StatusOK, nil
+}
+
+func putStream(hash string, size int64) (*reedso.RSPutStream, error) {
+	servers := heartbeat.ChooseServers(reedso.ALL_SHARDS, nil)
+	if len(servers) != reedso.ALL_SHARDS {
+		return nil, fmt.Errorf("cannot find enough dataServer")
+	}
+	log.Printf("apiServer INFO: Choose random data servers to save object %s: %v\n", hash, servers)
+	return reedso.NewRSPutStream(servers, hash, size)
+}
+
+func LoadObject(writer http.ResponseWriter, hash string, size int64) (statusCode int, err error) {
+	stream, err := getStream(hash, size)
+	if err != nil {
+		log.Println(err)
+		return http.StatusNotFound, err
+	}
+	io.Copy(writer, stream)
+	// 保证能够正常解码数据后，在将修复的数据保存到数据节点中
+	stream.Close()
+	return http.StatusOK, nil
+}
+
+func getStream(objectName string, size int64) (*reedso.RSGetStream, error) {
+	locateInfo := locate.Locate(objectName)
+	if len(locateInfo) < reedso.DATA_SHARDS {
+		return nil, fmt.Errorf("Error: object %s locate failed, the data shards located is not enough: %v\n",
+			objectName, locateInfo)
+	}
+	dataServers := make([]string, 0)
+	if len(locateInfo) < reedso.ALL_SHARDS {
+		log.Printf("INFO: some of shards need to repair\n")
+		dataServers = heartbeat.ChooseServers(reedso.ALL_SHARDS-len(locateInfo), locateInfo)
+	}
+	return reedso.NewRSGetStream(locateInfo, dataServers, objectName, size)
 }

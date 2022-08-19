@@ -1,30 +1,16 @@
 package main
 
 import (
-<<<<<<< HEAD
-<<<<<<< HEAD
+	"github.com/joho/godotenv"
 	flag "github.com/spf13/pflag"
 	"golang-object-storage/internal/apiserver/global"
 	"golang-object-storage/internal/apiserver/heartbeat"
 	"golang-object-storage/internal/apiserver/index"
-=======
-	"flag"
-	"golang-object-storage/internal/apiserver/global"
-	"golang-object-storage/internal/apiserver/heartbeat"
->>>>>>> 60c4855 (build(chapter03): 第三章代码)
-=======
-	flag "github.com/spf13/pflag"
-	"golang-object-storage/internal/apiserver/global"
-	"golang-object-storage/internal/apiserver/heartbeat"
-	"golang-object-storage/internal/apiserver/index"
->>>>>>> f301f56 (feat✨:  chapter3)
 	"golang-object-storage/internal/apiserver/locate"
 	"golang-object-storage/internal/apiserver/objects"
 	"golang-object-storage/internal/apiserver/versions"
 	"log"
 	"net/http"
-
-	"github.com/joho/godotenv"
 )
 
 // 加载配置文件

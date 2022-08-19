@@ -1,6 +1,6 @@
 /*
-	使用io.Pipe()同步管道，完成文件读写的同步
-	通过chan完成错误信息的传递
+使用io.Pipe()同步管道，完成文件读写的同步
+通过chan完成错误信息的传递
 */
 package objectstream
 
@@ -15,18 +15,13 @@ type PutStream struct {
 	errorChan chan error
 }
 
-func NewPutStream(server, objectName string) *PutStream {
-	if server == "" || objectName == "" {
-		return nil
-	}
-
+func NewPutStream(upload_url string) *PutStream {
 	r, w := io.Pipe()
 	errorChan := make(chan error)
 
 	go func() {
 		// 根据 io.Pipe()的规则,此处会发生阻塞，等待w完成写入。
-		request, _ := http.NewRequest(http.MethodPut,
-			fmt.Sprintf("http://%s/objects/%s", server, objectName), r)
+		request, _ := http.NewRequest(http.MethodPut, upload_url, r)
 		httpClient := http.Client{}
 		response, err := httpClient.Do(request)
 		if err == nil && response.StatusCode != http.StatusOK {

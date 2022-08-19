@@ -3,7 +3,6 @@ package objects
 import (
 	"fmt"
 	"golang-object-storage/internal/pkg/elasticsearch"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,7 +12,6 @@ import (
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	m := r.Method
-
 	if m == http.MethodPut {
 		put(w, r)
 	} else if m == http.MethodGet {
@@ -29,48 +27,36 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 // put 文件上传服务
 func put(w http.ResponseWriter, r *http.Request) {
 	// 解析参数
-	//hashVal 哈希值
-	//name 文件名
-	//size 文件大小
-	parseParam := func(r *http.Request) (md5, name string, size int64, err error) {
-
-		hashVal := GetHashFromHeader(r.Header)
-		if hashVal == "" {
-			log.Println("API-Server HTTP Error: missing object hash in request header")
-			w.WriteHeader(http.StatusBadRequest)
-			err = fmt.Errorf("API-Server HTTP Error: missing object hash in request header")
-			return
-		}
-		// 获取size
-		size, err = strconv.ParseInt(r.Header.Get("content-length"), 0, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println(err)
-			return
-		}
-		if size == 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println("API-Server HTTP Error: missing object file in request body")
-			err = fmt.Errorf("API-Server HTTP Error: missing object file in request body")
-			return
-		}
-		// 获取文件名
-		components := strings.Split(strings.TrimSpace(r.URL.EscapedPath()), "/")
-		name = components[len(components)-1]
-		if name == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println("API-Server HTTP Error: missing object filename in request url")
-			err = fmt.Errorf("API-Server HTTP Error: missing object filename in request url")
-		}
+	// hashVal 哈希值
+	hashVal := GetHashFromHeader(r.Header)
+	if hashVal == "" {
+		log.Println("API-Server HTTP Error: missing object hash in request header")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	hashVal, name, size, err := parseParam(r)
+	// size 上传文件大小
+	size, err := strconv.ParseInt(r.Header.Get("content-length"), 0, 64)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 		return
 	}
-	//交由下层负责文件存储
+	if size == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("API-Server HTTP Error: missing object file in request body")
+		err = fmt.Errorf("API-Server HTTP Error: missing object file in request body")
+		return
+	}
+	//name 文件名
+	components := strings.Split(strings.TrimSpace(r.URL.EscapedPath()), "/")
+	name := components[len(components)-1]
+	if name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("API-Server HTTP Error: missing object filename in request url")
+		err = fmt.Errorf("API-Server HTTP Error: missing object filename in request url")
+	}
+	// 交由下层负责文件存储
 	statusCode, err := StoreObject(r.Body, hashVal, size)
-
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(statusCode)
@@ -79,12 +65,8 @@ func put(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(statusCode)
 		return
 	}
-<<<<<<< HEAD
-=======
-
->>>>>>> f301f56 (feat✨:  chapter3)
+	// 保存文件元信息
 	err = elasticsearch.AddVersion(name, size, hashVal)
-
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -117,15 +99,13 @@ func get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	// 存储对象数据
-	name := url.PathEscape(metadata.Hash)
-	stream, err := getStream(name)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusNotFound)
+	// 存储对象数据原信息
+	statusCode, err := LoadObject(w, url.PathEscape(metadata.Hash), metadata.Size)
+	if statusCode != http.StatusOK || err != nil {
+		w.WriteHeader(statusCode)
 		return
 	}
-	io.Copy(w, stream)
+
 }
 
 func del(w http.ResponseWriter, r *http.Request) {

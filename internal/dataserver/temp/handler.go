@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +42,14 @@ func post(w http.ResponseWriter, r *http.Request) {
 	// 注意：产生的uuid值末尾会携带一个换行符，因此必须去除换行符
 	uUid := uuid.GenUUid()
 	name := GetObjectName(r.URL.EscapedPath())
+	components := strings.Split(name, ".")
+	hash := components[0]
+	sharpIdx, err := strconv.Atoi(components[1])
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	size, err := strconv.ParseInt(r.Header.Get("size"), 0, 64)
 	if err != nil {
 		log.Println(err)
@@ -49,9 +58,10 @@ func post(w http.ResponseWriter, r *http.Request) {
 	}
 
 	temp := tempInfo{
-		UUID: uUid,
-		Hash: name,
-		Size: size,
+		UUID:     uUid,
+		Hash:     hash,
+		SharpIdx: sharpIdx,
+		Size:     size,
 	}
 	// 缓存对象的临时元数据
 	err = temp.writeToFile()
@@ -61,7 +71,13 @@ func post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 创建用于存放对象数据的临时文件，这个与对象的临时元数据文件的作用不一样，前者用于标志临时对象所在的服务节点，后者用于存放对象的内容数据
-	os.Create(path.Join(global.StoragePath, "temp", temp.UUID+".dat"))
+	file, err := os.Create(path.Join(global.StoragePath, "temp", temp.UUID+".dat"))
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
 	w.Write([]byte(uUid))
 }
 
@@ -99,7 +115,6 @@ func patch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ac_size := actualInfo.Size(); ac_size != tempinfo.Size {
-		file.Close()
 		tempinfo.removeAllTempFromFile()
 		if err != nil {
 			panic(err)
@@ -113,9 +128,9 @@ func patch(w http.ResponseWriter, r *http.Request) {
 
 // 确认完成文件上传,临时文件转为正式文件(移动文件位置,并删除文件元信息)
 func put(w http.ResponseWriter, r *http.Request) {
-	uuid := GetObjectName(r.URL.EscapedPath())
+	name := GetObjectName(r.URL.EscapedPath())
 	var tempinfo tempInfo
-	tempinfo.UUID = uuid
+	tempinfo.UUID = name
 	// 从临时缓存区获取存储对象元数据的临时文件
 	err := tempinfo.readFromFile()
 
@@ -144,8 +159,8 @@ func put(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	// 数据转正
 	file.Close()
+	// 数据转正
 	tempinfo.commitTempObject(dataFile)
 }
 

@@ -7,14 +7,35 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 )
 
 // 临时文件信息结构体
 type tempInfo struct {
-	UUID string //文件的临时uuid
-	Hash string //文件的唯一表示hash code
-	Size int64  //文件的大小信息
+	UUID     string `json:"uuid"` //文件的临时uuid
+	Hash     string `json:"hash"` //文件的唯一表示hash code
+	SharpIdx int    `json:"sharp_idx"`
+	Size     int64  `json:"size"` //文件的大小信息
+}
+
+func NewTempInfoFromFile(uuid string) (*tempInfo, error) {
+	info := &tempInfo{UUID: uuid}
+	err := info.readFromFile()
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
+}
+
+func (t *tempInfo) hash() string {
+	return strings.Split(t.Hash, ".")[0]
+}
+
+func (t *tempInfo) id() int {
+	id, _ := strconv.Atoi(strings.Split(t.Hash, ".")[1])
+	return id
 }
 
 func (t *tempInfo) getInfoFilePath() string {
@@ -31,27 +52,13 @@ func (t *tempInfo) writeToFile() error {
 	if err != nil {
 		return err
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(file)
+	defer file.Close()
 	bytesData, _ := json.Marshal(t)
 	_, err = file.Write(bytesData)
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func NewTempInfoFromFile(uuid string) (*tempInfo, error) {
-	info := &tempInfo{UUID: uuid}
-	err := info.readFromFile()
-	if err != nil {
-		return nil, err
-	}
-	return info, nil
 }
 
 // 读取存放对象元数据的临时文件
@@ -101,11 +108,11 @@ func (t *tempInfo) removeAllTempFromFile() error {
 
 // 将临时文件移动至节点内部
 func (t *tempInfo) commitTempObject(tempFilePath string) {
-	err := os.Rename(tempFilePath, path.Join(global.StoragePath, "objects", t.Hash))
+	err := os.Rename(tempFilePath, path.Join(global.StoragePath, "objects", t.Hash+"."+strconv.Itoa(t.SharpIdx)))
 	if err != nil {
 		panic(err)
 	}
-	locate.AddNewObject(t.Hash)
+	locate.AddNewObject(t.Hash, t.SharpIdx)
 }
 
 // CleanTemp 每隔12小时清理一次临时文件

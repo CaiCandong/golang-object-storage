@@ -3,7 +3,7 @@ package objects
 import (
 	"golang-object-storage/internal/dataserver/global"
 	"golang-object-storage/internal/dataserver/locate"
-	"golang-object-storage/internal/pkg/hash"
+	"golang-object-storage/internal/pkg/hashutils"
 	"io"
 	"log"
 	"net/http"
@@ -67,7 +67,7 @@ func getFilePath(name string) string {
 	filePath := path.Join(global.StoragePath, "objects", name)
 	file, _ := os.Open(filePath)
 	// 计算实际存储的文件的哈希值
-	storedObjectHash := url.PathEscape(hash.CalculateHash(file))
+	storedObjectHash := url.PathEscape(hashutils.CalculateHash(file))
 	file.Close()
 	// 校验：校验接口层中ES存储的哈希值与实际存储的内容的哈希值是否一致，若是发生了变化则不一致，并且删除该对象数据
 	// 数据存放久了可能会发生数据降解等问题，因此有必要做一致性校验

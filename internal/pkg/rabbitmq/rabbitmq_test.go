@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	//url格式: f"amqp://{username}:{password}@{host}:{port}/{vhost}
 	mqUrl        = "amqp://test:test@localhost:5672/center"
 	testExchange = "testServers"
 )

@@ -15,11 +15,12 @@ type PutStream struct {
 }
 
 // NewPutStream 建立与数据服务的临时文件
-func NewPutStream(server, objectName string, size int64) (*PutStream, error) {
+// "http://"+server+"/temp/"+objectName,
+func NewPutStream(uploadUrl string, size int64) (*PutStream, error) {
 	// 创建临时对象
 	request, err := http.NewRequest(
 		http.MethodPost,
-		"http://"+server+"/temp/"+objectName,
+		uploadUrl,
 		nil)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func NewPutStream(server, objectName string, size int64) (*PutStream, error) {
 	}
 
 	return &PutStream{
-		Server: server,
+		Server: uploadUrl,
 		UUID:   string(uuidBytes),
 	}, nil
 }

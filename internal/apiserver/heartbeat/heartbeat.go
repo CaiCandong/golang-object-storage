@@ -1,6 +1,7 @@
 package heartbeat
 
 import (
+	"golang-object-storage/internal/apiserver/reedso"
 	"golang-object-storage/internal/pkg/rabbitmq"
 	"log"
 	"math/rand"
@@ -66,7 +67,13 @@ func GetAliveDataServers() []string {
 	return dataServers
 }
 
+// ChooseRandomDataServer
+// @author: caicandong
+// @date: 2022-08-16 14:09:18
+// @Description:
+// @return string
 func ChooseRandomDataServer() string {
+
 	dataServers := GetAliveDataServers()
 	serverCount := len(dataServers)
 
@@ -76,4 +83,38 @@ func ChooseRandomDataServer() string {
 
 	log.Println("Alive data servers:", strings.Join(dataServers, ", "))
 	return dataServers[rand.Intn(serverCount)]
+}
+
+// ChooseServers
+// @author: caicandong
+// @date: 2022-08-16 14:10:16
+// @Description:
+// @param dataServersNum  需要的数据服务节点个
+// @param exclude 已经存放数据服务的节点
+// @return dataServers
+func ChooseServers(dataServersNum int, exclude map[int]string) (dataServers []string) {
+	// 所需的用于存储的分片的节点数与已存放正常分片数据的节点数之和应等于一个对象的分片数之和，否则应直接中断程序执行
+	if dataServersNum+len(exclude) != reedso.ALL_SHARDS {
+		panic("apiServer Error: the sum of brokenShards number and unbrokenShards number is not equal to ALL_SHARDS\n")
+	}
+	candiateServers := make([]string, 0, dataServersNum)
+	reverseUnbrokenShardMap := make(map[string]int)
+	for id, serverAddr := range exclude {
+		reverseUnbrokenShardMap[serverAddr] = id
+	}
+
+	aliveServers := GetAliveDataServers()
+	for i := 0; i < len(aliveServers); i++ {
+		if _, in := reverseUnbrokenShardMap[aliveServers[i]]; !in {
+			candiateServers = append(candiateServers, aliveServers[i])
+		}
+	}
+	if len(candiateServers) < dataServersNum {
+		return
+	}
+	randomIds := rand.Perm(len(candiateServers))
+	for i := 0; i < dataServersNum; i++ {
+		dataServers = append(dataServers, candiateServers[randomIds[i]])
+	}
+	return
 }
