@@ -3,7 +3,7 @@
 ## objects
 - 文件下载
 ``` 
-    GET http://${host}/objects/<file_name>
+    GET http://${host}/objects/<file_hash>
 ```
 ## temp
 - 文件元信息上传，建立临时文件存储

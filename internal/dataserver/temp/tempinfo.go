@@ -2,9 +2,12 @@ package temp
 
 import (
 	"encoding/json"
+	"fmt"
 	"golang-object-storage/internal/dataserver/global"
 	"golang-object-storage/internal/dataserver/locate"
+	"golang-object-storage/internal/pkg/utils"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"strconv"
@@ -108,7 +111,13 @@ func (t *tempInfo) removeAllTempFromFile() error {
 
 // 将临时文件移动至节点内部
 func (t *tempInfo) commitTempObject(tempFilePath string) {
-	err := os.Rename(tempFilePath, path.Join(global.StoragePath, "objects", t.Hash+"."+strconv.Itoa(t.SharpIdx)))
+	// 分片哈希
+	shardHash := url.PathEscape(utils.GetFileHash(tempFilePath))
+	// 目标文件名
+	targetName := fmt.Sprintf("%s.%d.%s", t.Hash, t.SharpIdx, shardHash)
+	// 目标完整路径
+	fullTargetPath := path.Join(global.StoragePath, "objects", targetName)
+	err := os.Rename(tempFilePath, fullTargetPath)
 	if err != nil {
 		panic(err)
 	}

@@ -10,6 +10,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/spf13/pflag v1.0.5
 	github.com/streadway/amqp v1.0.0
+	go.uber.org/zap v1.22.0
 )
 
 require (
@@ -17,4 +18,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.0.14 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
 )

@@ -3,3 +3,5 @@
 static
 config.env
 *.exe
+log
+test

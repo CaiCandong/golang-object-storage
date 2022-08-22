@@ -6,7 +6,7 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/pflag"
-	"golang-object-storage/internal/pkg/hashutils"
+	"golang-object-storage/internal/pkg/utils"
 	"os"
 )
 
@@ -30,9 +30,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	token, err := hashutils.GetFileHash(os.Args[1])
-	if err != nil {
-		fmt.Printf("Error: %s\n", err.Error())
+	token := utils.GetFileHash(os.Args[1])
+	if token == "" {
+		fmt.Printf("Error: %s 文件不存在", os.Args[1])
 		return
 	}
 

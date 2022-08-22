@@ -2,7 +2,7 @@ package temp
 
 import (
 	"golang-object-storage/internal/dataserver/global"
-	"golang-object-storage/internal/pkg/uuid"
+	"golang-object-storage/internal/pkg/utils"
 	"io"
 	"log"
 	"net/http"
@@ -40,7 +40,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 // 创建存储对象元数据的临时文件，同时返回临时文件的uuid
 func post(w http.ResponseWriter, r *http.Request) {
 	// 注意：产生的uuid值末尾会携带一个换行符，因此必须去除换行符
-	uUid := uuid.GenUUid()
+	uUid := utils.GenUUid()
 	name := GetObjectName(r.URL.EscapedPath())
 	components := strings.Split(name, ".")
 	hash := components[0]
@@ -71,7 +71,9 @@ func post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 创建用于存放对象数据的临时文件，这个与对象的临时元数据文件的作用不一样，前者用于标志临时对象所在的服务节点，后者用于存放对象的内容数据
-	file, err := os.Create(path.Join(global.StoragePath, "temp", temp.UUID+".dat"))
+	filepath := path.Join(global.StoragePath, "temp", temp.UUID+".dat")
+	file, err := os.Create(filepath)
+	log.Printf("create file meatedata %s", filepath)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)

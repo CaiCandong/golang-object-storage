@@ -72,8 +72,12 @@ echo http.cors.allow-origin: \"*\"  >> config/elasticsearch.yml
 
 
 ```shell
-go run internal/dataserver/main.go -p :8080 -s static/8080 &
-go run internal/dataserver/main.go -p :8081 -s static/8081 &
+go run internal/dataserver/main.go -p :8080 -s static/8080
+```
+ ```shell
+go run internal/dataserver/main.go -p :8081 -s static/8081
+```
+ &
 go run internal/dataserver/main.go -p :8082 -s static/8082 &
 go run internal/dataserver/main.go -p :8083 -s static/8083 &
 go run internal/dataserver/main.go -p :8084 -s static/8084 &

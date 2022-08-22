@@ -3,33 +3,35 @@ package main
 import (
 	"github.com/joho/godotenv"
 	flag "github.com/spf13/pflag"
+	"go.uber.org/zap"
+	v1 "golang-object-storage/internal/apiserver/api/v1"
+	"golang-object-storage/internal/apiserver/datalocate"
 	"golang-object-storage/internal/apiserver/global"
-	"golang-object-storage/internal/apiserver/heartbeat"
-	"golang-object-storage/internal/apiserver/index"
-	"golang-object-storage/internal/apiserver/locate"
-	"golang-object-storage/internal/apiserver/objects"
-	"golang-object-storage/internal/apiserver/versions"
 	"log"
 	"net/http"
 )
 
-// 加载配置文件
 func init() {
+	// 加载配置文件
 	err := godotenv.Load("config.env")
 	if err != nil {
 		log.Fatalln("godotenv Error: env files load failed")
 	}
+	// 日志
+	sugar := zap.NewExample().Sugar()
+	//logger, _ := zap.NewProduction(zap.AddCaller())
+	global.Logger = sugar
+	defer sugar.Sync()
+
 }
 
 func main() {
 	flag.StringVar(&global.ListenAddr, "listenAddr", ":8089", "")
 	flag.Parse()
-	// global.CheckSharedVars()
 
-	go heartbeat.ListenHeartbeat()
-	http.HandleFunc("/index/", index.Handler)
-	http.HandleFunc("/objects", objects.Handler)
-	http.HandleFunc("/locate/", locate.Handler)
-	http.HandleFunc("/versions/", versions.Handler)
+	go datalocate.ListenHeartbeat()
+	http.HandleFunc("/objects", v1.ObjectHandler)
+	http.HandleFunc("/locate/", v1.VersionHandler)
+	http.HandleFunc("/versions/", v1.LocateHandler)
 	log.Fatalln(http.ListenAndServe(global.ListenAddr, nil))
 }

@@ -1,8 +1,11 @@
 package global
 
+import "go.uber.org/zap"
+
 var (
 	ListenAddr  = ""
 	StoragePath = ""
+	Logger      *zap.Logger
 )
 
 // func CheckSharedVars() {

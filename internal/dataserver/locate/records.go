@@ -1,6 +1,7 @@
 package locate
 
 import (
+	"fmt"
 	"golang-object-storage/internal/dataserver/global"
 	"log"
 	"path"
@@ -18,6 +19,7 @@ type FileHashRecords struct {
 var defaultRecord *FileHashRecords
 
 func NewFileHashRecords(pattern string) *FileHashRecords {
+	global.Logger.Info(fmt.Sprintf("Loading File Hash Records ,pattern : %s", pattern))
 	r := &FileHashRecords{}
 	r.records = make(map[string]int)
 	files, _ := filepath.Glob(pattern)
@@ -30,7 +32,9 @@ func NewFileHashRecords(pattern string) *FileHashRecords {
 			log.Fatalf("Error: shard %v name is invalid, it should be 3 compoments [objectHash.ID.shardHash]\n", shardNameComponents)
 		}
 		r.records[fileHash] = shardIdx
+		global.Logger.Info(fmt.Sprintf("Loaded File :%s , Shard Idx:%s ", fileHash, shardIdx))
 	}
+	global.Logger.Info(fmt.Sprintf("Loading File finished,total %d file loaded", len(r.records)))
 	return r
 }
 

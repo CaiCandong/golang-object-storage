@@ -1,7 +1,6 @@
 package rabbitmq
 
 import (
-	// "distributed-object-storage/src///err_utils"
 	"encoding/json"
 
 	"github.com/streadway/amqp"
